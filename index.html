@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Something Big Is Coming</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Bebas+Neue&family=Space+Mono&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0A3B5F;
+      --navy-mid: #0d4a77;
+      --navy-light: #1a6ea8;
+      --gold: #C9A84C;
+      --cream: #F5EDD8;
+      --white: #ffffff;
+    }
+
+    html, body {
+      height: 100%;
+      background: #040d14;
+      font-family: 'Cormorant Garamond', serif;
+      color: var(--cream);
+      overflow: hidden;
+    }
+
+    /* ── starfield ── */
+    #stars {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 40%, #0a1a2e 0%, #040d14 70%);
+    }
+    #stars::before, #stars::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 15% 90%, rgba(255,255,255,.25) 0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 15%, rgba(255,255,255,.4) 0%, transparent 100%),
+        radial-gradient(1.2px 1.2px at 60% 85%, rgba(255,255,255,.3) 0%, transparent 100%);
+      background-size: 400px 400px;
+    }
+
+    /* ── layout ── */
+    #scene {
+      position: relative; z-index: 1;
+      width: 100vw; height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+    }
+
+    /* ── map container ── */
+    #map-wrap {
+      position: relative;
+      width: min(90vw, 820px);
+      animation: floatUp 3s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* glow behind map */
+    #map-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse at center, rgba(10,59,95,.7) 0%, transparent 70%);
+      z-index: -1;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .7; transform: scale(1); }
+      50%       { opacity: 1;  transform: scale(1.04); }
+    }
+
+    svg#world {
+      width: 100%; height: auto;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(10,59,95,.9)) drop-shadow(0 0 40px rgba(26,110,168,.4));
+    }
+
+    /* land */
+    .land {
+      fill: var(--navy);
+      stroke: #1a6ea8;
+      stroke-width: 0.4;
+      transition: fill .3s;
+    }
+    .land:hover { fill: var(--navy-mid); cursor: default; }
+
+    /* ocean */
+    #ocean { fill: #040d14; }
+
+    /* grid lines */
+    .graticule {
+      fill: none;
+      stroke: rgba(26,110,168,.15);
+      stroke-width: 0.3;
+    }
+
+    /* ── text block ── */
+    #tagline {
+      margin-top: 36px;
+      text-align: center;
+      animation: fadeIn 1s 1.8s ease forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    #tagline h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 5.2rem);
+      letter-spacing: .12em;
+      line-height: 1;
+      color: var(--white);
+      text-shadow: 0 0 30px rgba(10,59,95,.9), 0 0 60px rgba(26,110,168,.5);
+    }
+
+    #tagline h1 span {
+      color: var(--gold);
+    }
+
+    #tagline p {
+      margin-top: 14px;
+      font-size: clamp(.85rem, 2vw, 1.05rem);
+      font-weight: 300;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      color: rgba(245,237,216,.55);
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── divider ── */
+    .divider {
+      margin: 22px auto 0;
+      width: 80px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      animation: fadeIn 1s 2.4s ease forwards;
+      opacity: 0;
+    }
+
+    /* ── ping dots on map ── */
+    .ping {
+      position: absolute;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      transform: translate(-50%, -50%);
+      animation: pingAnim 2.5s ease-in-out infinite;
+    }
+    .ping::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
+      opacity: 0;
+      animation: ripple 2.5s ease-out infinite;
+    }
+
+    @keyframes pingAnim {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      50%       { transform: translate(-50%,-50%) scale(1.3); opacity: .7; }
+    }
+    @keyframes ripple {
+      0%   { transform: scale(1); opacity: .8; }
+      100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    /* ── scan line ── */
+    #scanline {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(26,110,168,.4) 50%, transparent 100%);
+      animation: scan 6s linear infinite;
+      pointer-events: none;
+      z-index: 999;
+    }
+    @keyframes scan {
+      0%   { top: 0; }
+      100% { top: 100vh; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="scanline"></div>
+
+<div id="scene">
+
+  <div id="map-wrap">
+    <!-- Ping dots (positioned as % of SVG viewBox 0 0 1000 500) -->
+    <div class="ping" style="left:22%;top:38%"></div>
+    <div class="ping" style="left:50%;top:44%;animation-delay:.8s"></div>
+    <div class="ping" style="left:75%;top:55%;animation-delay:1.6s"></div>
+    <div class="ping" style="left:60%;top:32%;animation-delay:.4s"></div>
+    <div class="ping" style="left:33%;top:60%;animation-delay:2s"></div>
+
+    <svg id="world" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <clipPath id="clip"><rect width="1000" height="500"/></clipPath>
+      </defs>
+
+      <!-- ocean background -->
+      <rect id="ocean" width="1000" height="500"/>
+
+      <!-- graticule (lat/lon grid) -->
+      <g class="graticule">
+        <!-- horizontals every 30° -->
+        <line x1="0" y1="83"  x2="1000" y2="83"/>
+        <line x1="0" y1="167" x2="1000" y2="167"/>
+        <line x1="0" y1="250" x2="1000" y2="250"/>
+        <line x1="0" y1="333" x2="1000" y2="333"/>
+        <line x1="0" y1="417" x2="1000" y2="417"/>
+        <!-- verticals every 30° -->
+        <line x1="83"  y1="0" x2="83"  y2="500"/>
+        <line x1="167" y1="0" x2="167" y2="500"/>
+        <line x1="250" y1="0" x2="250" y2="500"/>
+        <line x1="333" y1="0" x2="333" y2="500"/>
+        <line x1="417" y1="0" x2="417" y2="500"/>
+        <line x1="500" y1="0" x2="500" y2="500"/>
+        <line x1="583" y1="0" x2="583" y2="500"/>
+        <line x1="667" y1="0" x2="667" y2="500"/>
+        <line x1="750" y1="0" x2="750" y2="500"/>
+        <line x1="833" y1="0" x2="833" y2="500"/>
+        <line x1="917" y1="0" x2="917" y2="500"/>
+      </g>
+
+      <!-- ======= CONTINENTS (simplified but recognisable) ======= -->
+      <g clip-path="url(#clip)">
+
+        <!-- North America -->
+        <path class="land" d="
+          M 155,58  L 170,52  L 200,55  L 225,48  L 250,52
+          L 268,60  L 275,75  L 265,88  L 272,100 L 260,112
+          L 248,125 L 235,140 L 225,155 L 215,168 L 205,178
+          L 190,185 L 180,198 L 175,210 L 168,218 L 158,225
+          L 148,218 L 142,205 L 138,192 L 132,180 L 128,165
+          L 120,152 L 115,138 L 110,122 L 108,108 L 112,95
+          L 118,82  L 130,72  L 142,65  Z
+        "/>
+
+        <!-- Greenland -->
+        <path class="land" d="
+          M 200,18 L 225,12 L 250,16 L 262,28 L 255,40
+          L 238,46 L 218,44 L 205,34 Z
+        "/>
+
+        <!-- Central America + Caribbean stub -->
+        <path class="land" d="
+          M 168,218 L 175,228 L 170,238 L 162,242
+          L 158,235 L 158,225 Z
+        "/>
+
+        <!-- South America -->
+        <path class="land" d="
+          M 188,248 L 205,238 L 218,242 L 228,255
+          L 232,270 L 228,285 L 235,300 L 240,318
+          L 238,335 L 230,352 L 220,368 L 210,382
+          L 200,392 L 192,400 L 185,408 L 180,395
+          L 178,378 L 180,360 L 178,342 L 172,326
+          L 168,310 L 165,292 L 162,275 L 163,258
+          L 168,248 Z
+        "/>
+
+        <!-- Europe -->
+        <path class="land" d="
+          M 440,68  L 455,60  L 470,62  L 482,72
+          L 490,82  L 492,95  L 485,105 L 478,112
+          L 470,118 L 462,112 L 455,120 L 448,115
+          L 440,108 L 432,100 L 430,90  L 435,80  Z
+        "/>
+
+        <!-- Scandinavia -->
+        <path class="land" d="
+          M 468,48 L 480,40 L 490,44 L 492,56
+          L 485,66 L 475,70 L 468,62 Z
+        "/>
+        <path class="land" d="
+          M 455,42 L 464,36 L 470,42 L 466,52
+          L 458,54 Z
+        "/>
+
+        <!-- UK & Ireland -->
+        <path class="land" d="M 432,72 L 440,66 L 445,74 L 440,82 L 432,80 Z"/>
+        <path class="land" d="M 425,75 L 430,70 L 433,78 L 428,82 Z"/>
+
+        <!-- Africa -->
+        <path class="land" d="
+          M 455,155 L 475,148 L 495,150 L 512,158
+          L 522,172 L 525,188 L 520,205 L 515,222
+          L 512,240 L 515,258 L 518,275 L 515,292
+          L 508,308 L 498,320 L 488,330 L 478,338
+          L 468,332 L 460,318 L 455,302 L 452,285
+          L 450,268 L 448,250 L 448,232 L 450,215
+          L 450,198 L 452,180 L 452,165 Z
+        "/>
+
+        <!-- Madagascar -->
+        <path class="land" d="M 530,275 L 538,268 L 542,280 L 538,295 L 530,290 Z"/>
+
+        <!-- Russia / Northern Asia -->
+        <path class="land" d="
+          M 495,55  L 520,45  L 550,38  L 580,32
+          L 615,28  L 645,30  L 672,35  L 698,40
+          L 720,48  L 735,58  L 740,70  L 732,82
+          L 718,90  L 700,95  L 680,98  L 658,100
+          L 638,102 L 618,105 L 598,108 L 578,110
+          L 558,112 L 538,112 L 520,110 L 505,105
+          L 496,95  L 490,82  L 492,68  Z
+        "/>
+
+        <!-- Central & South Asia -->
+        <path class="land" d="
+          M 540,115 L 568,112 L 598,115 L 622,120
+          L 640,130 L 648,145 L 642,158 L 632,168
+          L 618,175 L 600,178 L 582,178 L 565,172
+          L 552,162 L 544,148 L 540,135 Z
+        "/>
+
+        <!-- Indian subcontinent -->
+        <path class="land" d="
+          M 600,178 L 618,178 L 630,188 L 635,202
+          L 632,218 L 622,232 L 610,242 L 600,248
+          L 592,240 L 588,224 L 590,208 L 594,195 Z
+        "/>
+
+        <!-- China + East Asia -->
+        <path class="land" d="
+          M 648,100 L 680,98  L 710,102 L 728,112
+          L 735,128 L 730,145 L 720,158 L 705,168
+          L 688,175 L 670,178 L 652,175 L 638,165
+          L 632,150 L 635,132 L 642,118 Z
+        "/>
+
+        <!-- Japan -->
+        <path class="land" d="M 740,108 L 748,102 L 754,112 L 748,122 L 740,118 Z"/>
+        <path class="land" d="M 745,125 L 752,118 L 758,128 L 752,138 L 745,132 Z"/>
+
+        <!-- Southeast Asia -->
+        <path class="land" d="
+          M 672,178 L 692,175 L 705,185 L 708,200
+          L 700,212 L 688,218 L 675,215 L 668,202
+          L 668,190 Z
+        "/>
+
+        <!-- Indonesia (simplified islands) -->
+        <path class="land" d="M 695,220 L 715,215 L 725,225 L 715,232 L 698,230 Z"/>
+        <path class="land" d="M 728,222 L 742,218 L 750,228 L 742,236 L 730,232 Z"/>
+        <path class="land" d="M 705,235 L 718,230 L 724,240 L 715,246 L 706,242 Z"/>
+
+        <!-- Philippines -->
+        <path class="land" d="M 718,190 L 725,185 L 730,195 L 724,204 L 717,200 Z"/>
+
+        <!-- Australia -->
+        <path class="land" d="
+          M 720,298 L 748,285 L 775,282 L 800,285
+          L 822,295 L 835,310 L 838,328 L 832,345
+          L 820,358 L 805,368 L 788,372 L 770,370
+          L 752,362 L 738,350 L 728,335 L 720,320
+          L 716,308 Z
+        "/>
+
+        <!-- New Zealand -->
+        <path class="land" d="M 858,360 L 866,352 L 872,362 L 866,374 L 858,370 Z"/>
+        <path class="land" d="M 862,378 L 868,370 L 875,380 L 869,390 L 862,386 Z"/>
+
+        <!-- Middle East -->
+        <path class="land" d="
+          M 530,135 L 548,130 L 562,138 L 568,152
+          L 562,165 L 550,172 L 538,168 L 530,155
+          L 528,145 Z
+        "/>
+
+        <!-- Alaska -->
+        <path class="land" d="M 85,58 L 100,52 L 115,55 L 120,65 L 110,72 L 95,70 L 85,65 Z"/>
+
+        <!-- Cuba / Caribbean islands -->
+        <path class="land" d="M 185,210 L 198,206 L 205,212 L 198,218 L 185,216 Z"/>
+
+        <!-- Iceland -->
+        <path class="land" d="M 405,52 L 418,46 L 428,52 L 425,62 L 412,65 L 404,60 Z"/>
+
+        <!-- Sri Lanka -->
+        <path class="land" d="M 610,252 L 615,248 L 619,255 L 615,262 L 609,258 Z"/>
+
+      </g>
+    </svg>
+  </div>
+
+  <div id="tagline">
+    <h1>We Are Building Something <span>Big</span></h1>
+    <p>A global vision — coming soon</p>
+    <div class="divider"></div>
+  </div>
+
+</div>
+
+</body>
+</html>
